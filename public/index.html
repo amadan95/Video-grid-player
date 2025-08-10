@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>VideoGrid Quick Cuts — Local Streaming Only</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <div id="toolbar" class="toolbar">
+    <div class="brand">VideoGrid Quick Cuts — Local Streaming Only</div>
+    <div class="controls">
+      <button id="btnOpen" class="btn">Add Folders</button>
+      <label class="layout">Layout
+        <select id="layout">
+          <option value="3x2">3×2</option>
+          <option value="2x2">2×2</option>
+          <option value="3x3">3×3</option>
+          <option value="4x2">4×2</option>
+          <option value="4x3">4×3</option>
+        </select>
+      </label>
+      <button id="btnStart" class="btn">Start Playback</button>
+      <button id="btnPause" class="btn">Pause All</button>
+      <button id="btnShuffle" class="btn">Shuffle All</button>
+      <button id="btnAudio" class="btn">Enable Audio</button>
+      <button id="btnFullscreen" class="btn">Fullscreen</button>
+    </div>
+  </div>
+
+  <details class="note">
+    <summary>How to run locally (secure context)</summary>
+    Open this app via http://localhost to allow the Open Folder button to request permission. Your files never upload; playback uses local access or local HTTP streaming.
+  </details>
+
+  <div id="grid" class="grid" data-cols="3" data-rows="2"></div>
+  <input id="dirPicker" type="file" webkitdirectory directory multiple hidden />
+  <div id="dropHint" class="drop-hint" hidden>Drop folders here to add</div>
+  <script src="/app2.js"></script>
+</body>
+</html>
