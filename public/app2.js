@@ -8,6 +8,7 @@
   const btnFullscreen = document.getElementById('btnFullscreen');
   const btnAudio = document.getElementById('btnAudio');
   const layoutSel = document.getElementById('layout');
+  const clipSel = document.getElementById('clipLen');
   const params = new URLSearchParams(location.search);
   const dirPicker = document.getElementById('dirPicker');
   const dropHint = document.getElementById('dropHint');
@@ -22,14 +23,24 @@
   }
 
   const layoutParam = params.get('layout') || '3x2';
+  const clipParam = parseInt(params.get('clip') || '15', 10);
   if (layoutSel) layoutSel.value = layoutParam;
   applyLayout(layoutParam);
+  if (clipSel) clipSel.value = String([15, 30, 60].includes(clipParam) ? clipParam : 15);
 
   layoutSel?.addEventListener('change', () => {
     params.set('layout', layoutSel.value);
     history.replaceState(null, '', `?${params.toString()}`);
     applyLayout(layoutSel.value);
     rebuildGrid();
+  });
+
+  clipSel?.addEventListener('change', () => {
+    const val = parseInt(clipSel.value, 10);
+    const sec = [15, 30, 60].includes(val) ? val : 15;
+    params.set('clip', String(sec));
+    history.replaceState(null, '', `?${params.toString()}`);
+    setClipSeconds(sec);
   });
 
   function pickRandom(list, excludeSet) {
@@ -93,7 +104,7 @@
       videoEl.src = src;
       const onLoadedMeta = () => {
         const duration = isFinite(videoEl.duration) ? videoEl.duration : 0;
-        const clip = 15;
+        const clip = clipSeconds;
         const maxStart = Math.max(0, duration - clip - 0.25);
         const start = maxStart > 0 ? Math.random() * maxStart : 0;
         try { videoEl.currentTime = start; } catch (e) {}
@@ -113,6 +124,21 @@
   }
 
   let cells = [];
+  let clipSeconds = [15, 30, 60].includes(clipParam) ? clipParam : 15;
+  let rotationTimer = null;
+
+  function setClipSeconds(sec) {
+    clipSeconds = sec;
+    restartRotationTimer();
+  }
+
+  function restartRotationTimer() {
+    if (rotationTimer) clearInterval(rotationTimer);
+    rotationTimer = setInterval(async () => {
+      const active = currentSourceList;
+      await rotateAll(active);
+    }, clipSeconds * 1000);
+  }
   function rebuildGrid() {
     grid.innerHTML = '';
     const { cols, rows } = getLayoutNumbers();
@@ -149,11 +175,7 @@
     }
     rebuildGrid();
     await fillAllFromList(serverVideos);
-
-    setInterval(async () => {
-      const active = currentSourceList;
-      await rotateAll(active);
-    }, CLIP_MS);
+    restartRotationTimer();
   }
 
   main().catch((e) => {
@@ -310,7 +332,7 @@
       return new Promise((resolve) => {
         const onLoadedMeta = () => {
           const duration = isFinite(videoEl.duration) ? videoEl.duration : 0;
-          const clip = 15;
+          const clip = clipSeconds;
           const maxStart = Math.max(0, duration - clip - 0.25);
           const start = maxStart > 0 ? Math.random() * maxStart : 0;
           try { videoEl.currentTime = start; } catch {}
