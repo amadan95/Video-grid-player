@@ -12,6 +12,7 @@
   const dirPicker = document.getElementById('dirPicker');
   const dropHint = document.getElementById('dropHint');
   let hasAnyVideos = false;
+  let globalAudioEnabled = false;
 
   function markHasVideos() {
     if (!hasAnyVideos) {
@@ -58,7 +59,32 @@
     wrapper.appendChild(video);
     wrapper.appendChild(corner);
     grid.appendChild(wrapper);
-    return { wrapper, video };
+    const cell = { wrapper, video, corner };
+    attachHoverAudio(cell);
+    return cell;
+  }
+
+  function attachHoverAudio(cell) {
+    const { wrapper, video, corner } = cell;
+    const onEnter = () => {
+      if (!globalAudioEnabled) {
+        video.muted = false;
+        updateCornerLabel(corner, video);
+      }
+    };
+    const onLeave = () => {
+      if (!globalAudioEnabled) {
+        video.muted = true;
+        updateCornerLabel(corner, video);
+      }
+    };
+    wrapper.addEventListener('pointerenter', onEnter);
+    wrapper.addEventListener('pointerleave', onLeave);
+  }
+
+  function updateCornerLabel(cornerEl, videoEl) {
+    if (!cornerEl) return;
+    cornerEl.textContent = videoEl.muted ? 'muted' : 'audio';
   }
 
   function setVideoServer(videoEl, meta) {
@@ -257,6 +283,7 @@
     await Promise.all(cells.map(async (c) => {
       const meta = pickRandom(list, null);
       if (meta) await setVideoFromSource(c.video, meta);
+      updateCornerLabel(c.corner, c.video);
     }));
   }
 
@@ -266,6 +293,7 @@
       const meta = pickRandom(list, used);
       if (meta) used.add(meta.name || meta.relPath);
       await setVideoFromSource(c.video, meta);
+      updateCornerLabel(c.corner, c.video);
     }
   }
 
@@ -329,7 +357,12 @@
   btnAudio?.addEventListener('click', () => {
     const vids = Array.from(document.querySelectorAll('video'));
     const anyMuted = vids.some(v => v.muted);
-    vids.forEach(v => { v.muted = !anyMuted; });
+    const newMuted = anyMuted ? false : true; // if any muted, enable audio; else re-mute
+    globalAudioEnabled = !newMuted;
+    vids.forEach((v, idx) => {
+      v.muted = newMuted;
+    });
+    cells.forEach(c => updateCornerLabel(c.corner, c.video));
   });
 })();
 
